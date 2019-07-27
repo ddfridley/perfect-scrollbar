@@ -5,9 +5,10 @@ import { env } from '../lib/util';
 import ScrollType from '../lib/scroll-type'
 
 export default function(i) {
-  if (!env.supportsTouch && !env.supportsIePointer) {
-    return;
-  }
+  // It's impossible to detech if supportsTouch so we have to go for it and hope not to impact performace too much
+  //if (!env.supportsTouch && !env.supportsIePointer) {
+  //  return;
+  //}
 
   const element = i.element;
 
@@ -198,11 +199,11 @@ export default function(i) {
     }
   }
 
-  if (env.supportsTouch) {
-    i.event.bind(element, 'touchstart', touchStart);
-    i.event.bind(element, 'touchmove', touchMove);
-    i.event.bind(element, 'touchend', touchEnd);
-  } else if (env.supportsIePointer) {
+  // it's impossible to detech touch support - 
+  // if Ie was detected then do that
+  // otherwise install the touch events and hope that it doesn't impact performance if device does not support them
+  //
+  if (env.supportsIePointer) {
     if (window.PointerEvent) {
       i.event.bind(element, 'pointerdown', touchStart);
       i.event.bind(element, 'pointermove', touchMove);
@@ -212,5 +213,9 @@ export default function(i) {
       i.event.bind(element, 'MSPointerMove', touchMove);
       i.event.bind(element, 'MSPointerUp', touchEnd);
     }
+  } else {
+      i.event.bind(element, 'touchstart', touchStart);
+      i.event.bind(element, 'touchmove', touchMove);
+      i.event.bind(element, 'touchend', touchEnd);
   }
 }

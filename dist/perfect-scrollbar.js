@@ -929,9 +929,10 @@ var wheel = function(i) {
 };
 
 var touch = function(i) {
-  if (!env.supportsTouch && !env.supportsIePointer) {
-    return;
-  }
+  // It's impossible to detech if supportsTouch so we have to go for it and hope not to impact performace too much
+  //if (!env.supportsTouch && !env.supportsIePointer) {
+  //  return;
+  //}
 
   var element = i.element;
 
@@ -1122,11 +1123,11 @@ var touch = function(i) {
     }
   }
 
-  if (env.supportsTouch) {
-    i.event.bind(element, 'touchstart', touchStart);
-    i.event.bind(element, 'touchmove', touchMove);
-    i.event.bind(element, 'touchend', touchEnd);
-  } else if (env.supportsIePointer) {
+  // it's impossible to detech touch support - 
+  // if Ie was detected then do that
+  // otherwise install the touch events and hope that it doesn't impact performance if device does not support them
+  //
+  if (env.supportsIePointer) {
     if (window.PointerEvent) {
       i.event.bind(element, 'pointerdown', touchStart);
       i.event.bind(element, 'pointermove', touchMove);
@@ -1136,6 +1137,10 @@ var touch = function(i) {
       i.event.bind(element, 'MSPointerMove', touchMove);
       i.event.bind(element, 'MSPointerUp', touchEnd);
     }
+  } else {
+      i.event.bind(element, 'touchstart', touchStart);
+      i.event.bind(element, 'touchmove', touchMove);
+      i.event.bind(element, 'touchend', touchEnd);
   }
 };
 
