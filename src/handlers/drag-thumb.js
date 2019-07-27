@@ -6,6 +6,7 @@ import cls, {
 } from '../lib/class-names';
 import updateGeometry from '../update-geometry';
 import { toInt } from '../lib/util';
+import ScrollType from '../lib/scroll-type'
 
 export default function(i) {
   bindMouseScrollHandler(i, [
@@ -53,8 +54,7 @@ function bindMouseScrollHandler(
   let scrollBy = null;
 
   function mouseMoveHandler(e) {
-    element[scrollTop] =
-      startingScrollTop + scrollBy * (e[pageY] - startingMousePageY);
+    ScrollType[scrollTop](element,  startingScrollTop + scrollBy * (e[pageY] - startingMousePageY) )
     addScrollingClass(i, y);
     updateGeometry(i);
 
@@ -69,7 +69,7 @@ function bindMouseScrollHandler(
   }
 
   i.event.bind(i[scrollbarY], 'mousedown', e => {
-    startingScrollTop = element[scrollTop];
+    startingScrollTop = ScrollType[scrollTop](element);
     startingMousePageY = e[pageY];
     scrollBy =
       (i[contentHeight] - i[containerHeight]) /

@@ -1,6 +1,7 @@
 import * as DOM from '../lib/dom';
 import updateGeometry from '../update-geometry';
 import { isEditable } from '../lib/util';
+import ScrollType from '../lib/scroll-type'
 
 export default function(i) {
   const element = i.element;
@@ -10,7 +11,7 @@ export default function(i) {
     DOM.matches(i.scrollbarX, ':focus') || DOM.matches(i.scrollbarY, ':focus');
 
   function shouldPreventDefault(deltaX, deltaY) {
-    const scrollTop = Math.floor(element.scrollTop);
+    const scrollTop = Math.floor(ScrollType.scrollTop(element));
     if (deltaX === 0) {
       if (!i.scrollbarYActive) {
         return false;
@@ -23,7 +24,7 @@ export default function(i) {
       }
     }
 
-    const scrollLeft = element.scrollLeft;
+    const scrollLeft = ScrollType.scrollLeft(element);
     if (deltaY === 0) {
       if (!i.scrollbarXActive) {
         return false;
@@ -137,8 +138,8 @@ export default function(i) {
       return;
     }
 
-    element.scrollTop -= deltaY;
-    element.scrollLeft += deltaX;
+    ScrollType.scrollTop(element, ScrollType.scrollTop(element)-deltaY);
+    ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)+deltaX);
     updateGeometry(i);
 
     if (shouldPreventDefault(deltaX, deltaY)) {

@@ -1,4 +1,5 @@
 import updateGeometry from '../update-geometry';
+import ScrollType from '../lib/scroll-type'
 
 export default function(i) {
   const element = i.element;
@@ -11,7 +12,7 @@ export default function(i) {
       i.scrollbarYRail.getBoundingClientRect().top;
     const direction = positionTop > i.scrollbarYTop ? 1 : -1;
 
-    i.element.scrollTop += direction * i.containerHeight;
+    ScrollType.scrollTop(i.element,ScrollType.scrollTop(i.element)+(direction * i.containerHeight))
     updateGeometry(i);
 
     e.stopPropagation();
@@ -25,7 +26,7 @@ export default function(i) {
       i.scrollbarXRail.getBoundingClientRect().left;
     const direction = positionLeft > i.scrollbarXLeft ? 1 : -1;
 
-    i.element.scrollLeft += direction * i.containerWidth;
+    ScrollType.scrollLeft(element,ScrollType.scrollLeft(element) + (direction * i.containerWidth));
     updateGeometry(i);
 
     e.stopPropagation();

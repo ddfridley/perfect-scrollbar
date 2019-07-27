@@ -2,6 +2,7 @@ import * as CSS from '../lib/css';
 import cls from '../lib/class-names';
 import updateGeometry from '../update-geometry';
 import { env } from '../lib/util';
+import ScrollType from '../lib/scroll-type'
 
 export default function(i) {
   const element = i.element;
@@ -9,13 +10,13 @@ export default function(i) {
   let shouldPrevent = false;
 
   function shouldPreventDefault(deltaX, deltaY) {
-    const roundedScrollTop = Math.floor(element.scrollTop);
-    const isTop = element.scrollTop === 0;
+    const roundedScrollTop = Math.floor(ScrollType.scrollTop(element));
+    const isTop = ScrollType.scrollTop(element) === 0;
     const isBottom =
-      roundedScrollTop + element.offsetHeight === element.scrollHeight;
-    const isLeft = element.scrollLeft === 0;
+      roundedScrollTop + element.offsetHeight === ScrollType.scrollHeight(element);
+    const isLeft = ScrollType.scrollLeft(element) === 0;
     const isRight =
-      element.scrollLeft + element.offsetWidth === element.scrollWidth;
+      ScrollType.scrollLeft(element) + element.offsetWidth === element.scrollWidth;
 
     let hitsBound;
 
@@ -82,11 +83,11 @@ export default function(i) {
 
       // if scrollable
       if (overflow.match(/(scroll|auto)/)) {
-        const maxScrollTop = cursor.scrollHeight - cursor.clientHeight;
+        const maxScrollTop = ScrollType.scrollHeight(cursor) - cursor.clientHeight;
         if (maxScrollTop > 0) {
           if (
-            !(cursor.scrollTop === 0 && deltaY > 0) &&
-            !(cursor.scrollTop === maxScrollTop && deltaY < 0)
+            !(ScrollType.scrollTop(cursor) === 0 && deltaY > 0) &&
+            !(ScrollType.scrollTop(cursor) === maxScrollTop && deltaY < 0)
           ) {
             return true;
           }
@@ -94,8 +95,8 @@ export default function(i) {
         const maxScrollLeft = cursor.scrollWidth - cursor.clientWidth;
         if (maxScrollLeft > 0) {
           if (
-            !(cursor.scrollLeft === 0 && deltaX < 0) &&
-            !(cursor.scrollLeft === maxScrollLeft && deltaX > 0)
+            !(ScrollType.scrollLeft(cursor) === 0 && deltaX < 0) &&
+            !(ScrollType.scrollLeft(cursor) === maxScrollLeft && deltaX > 0)
           ) {
             return true;
           }
@@ -119,24 +120,24 @@ export default function(i) {
     if (!i.settings.useBothWheelAxes) {
       // deltaX will only be used for horizontal scrolling and deltaY will
       // only be used for vertical scrolling - this is the default
-      element.scrollTop -= deltaY * i.settings.wheelSpeed;
-      element.scrollLeft += deltaX * i.settings.wheelSpeed;
+      ScrollType.scrollTop(element,ScrollType.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
+      ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
     } else if (i.scrollbarYActive && !i.scrollbarXActive) {
       // only vertical scrollbar is active and useBothWheelAxes option is
       // active, so let's scroll vertical bar using both mouse wheel axes
       if (deltaY) {
-        element.scrollTop -= deltaY * i.settings.wheelSpeed;
+        ScrollType.scrollTop(element,ScrollType.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
       } else {
-        element.scrollTop += deltaX * i.settings.wheelSpeed;
+        ScrollType.scrollTop(element,ScrollType.scrollTop(element) + (deltaX * i.settings.wheelSpeed));
       }
       shouldPrevent = true;
     } else if (i.scrollbarXActive && !i.scrollbarYActive) {
       // useBothWheelAxes and only horizontal bar is active, so use both
       // wheel axes for horizontal bar
       if (deltaX) {
-        element.scrollLeft += deltaX * i.settings.wheelSpeed;
+        ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
       } else {
-        element.scrollLeft -= deltaY * i.settings.wheelSpeed;
+        ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)-(deltaX * i.settings.wheelSpeed));
       }
       shouldPrevent = true;
     }

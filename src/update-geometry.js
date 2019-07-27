@@ -2,15 +2,16 @@ import * as CSS from './lib/css';
 import * as DOM from './lib/dom';
 import cls from './lib/class-names';
 import { toInt } from './lib/util';
+import ScrollType from './lib/scroll-type'
 
 export default function(i) {
   const element = i.element;
-  const roundedScrollTop = Math.floor(element.scrollTop);
+  const roundedScrollTop = Math.floor(ScrollType.scrollTop(element));
 
   i.containerWidth = element.clientWidth;
   i.containerHeight = element.clientHeight;
-  i.contentWidth = element.scrollWidth;
-  i.contentHeight = element.scrollHeight;
+  i.contentWidth = ScrollType.scrollWidth(element);
+  i.contentHeight = ScrollType.scrollHeight(element);
 
   if (!element.contains(i.scrollbarXRail)) {
     // clean up and append
@@ -39,7 +40,7 @@ export default function(i) {
       toInt(i.railXWidth * i.containerWidth / i.contentWidth)
     );
     i.scrollbarXLeft = toInt(
-      (i.negativeScrollAdjustment + element.scrollLeft) *
+      (i.negativeScrollAdjustment + ScrollType.scrollLeft(element)) *
         (i.railXWidth - i.scrollbarXWidth) /
         (i.contentWidth - i.containerWidth)
     );
@@ -82,7 +83,7 @@ export default function(i) {
     element.classList.remove(cls.state.active('x'));
     i.scrollbarXWidth = 0;
     i.scrollbarXLeft = 0;
-    element.scrollLeft = 0;
+    ScrollType.scrollLeft(element,0);
   }
   if (i.scrollbarYActive) {
     element.classList.add(cls.state.active('y'));
@@ -90,7 +91,7 @@ export default function(i) {
     element.classList.remove(cls.state.active('y'));
     i.scrollbarYHeight = 0;
     i.scrollbarYTop = 0;
-    element.scrollTop = 0;
+    ScrollType.scrollTop(element,0)
   }
 }
 
@@ -106,46 +107,46 @@ function getThumbSize(i, thumbSize) {
 
 function updateCss(element, i) {
   const xRailOffset = { width: i.railXWidth };
-  const roundedScrollTop = Math.floor(element.scrollTop);
+  const roundedScrollTop = Math.floor(ScrollType.scrollTop(element));
 
   if (i.isRtl) {
     xRailOffset.left =
       i.negativeScrollAdjustment +
-      element.scrollLeft +
+      ScrollType.scrollLeft(element) +
       i.containerWidth -
       i.contentWidth;
   } else {
-    xRailOffset.left = element.scrollLeft;
+    xRailOffset.left = ScrollType.xRailOffsetLeft(i);
   }
   if (i.isScrollbarXUsingBottom) {
-    xRailOffset.bottom = i.scrollbarXBottom - roundedScrollTop;
+    xRailOffset.bottom = i.scrollbarXBottom - ScrollType.xRailBottom();
   } else {
-    xRailOffset.top = i.scrollbarXTop + roundedScrollTop;
+    xRailOffset.top = i.scrollbarXTop + ScrollType.xRailBottom();
   }
   CSS.set(i.scrollbarXRail, xRailOffset);
 
-  const yRailOffset = { top: roundedScrollTop, height: i.railYHeight };
+  const yRailOffset = { top: ScrollType.yRailOffset(element), height: i.railYHeight };
   if (i.isScrollbarYUsingRight) {
     if (i.isRtl) {
       yRailOffset.right =
         i.contentWidth -
-        (i.negativeScrollAdjustment + element.scrollLeft) -
+        (i.negativeScrollAdjustment + ScrollType.yRailLeft(element)) -
         i.scrollbarYRight -
         i.scrollbarYOuterWidth;
     } else {
-      yRailOffset.right = i.scrollbarYRight - element.scrollLeft;
+      yRailOffset.right = i.scrollbarYRight - ScrollType.yRailLeft(element);
     }
   } else {
     if (i.isRtl) {
       yRailOffset.left =
         i.negativeScrollAdjustment +
-        element.scrollLeft +
+        ScrollType.scrollLeft(element) +
         i.containerWidth * 2 -
         i.contentWidth -
         i.scrollbarYLeft -
         i.scrollbarYOuterWidth;
     } else {
-      yRailOffset.left = i.scrollbarYLeft + element.scrollLeft;
+      yRailOffset.left = i.scrollbarYLeft + ScrollType.scrollLeft(element);
     }
   }
   CSS.set(i.scrollbarYRail, yRailOffset);

@@ -1,6 +1,6 @@
 /*!
  * perfect-scrollbar v1.4.0
- * (c) 2018 Hyunje Jun
+ * (c) 2019 Hyunje Jun
  * @license MIT
  */
 (function (global, factory) {
@@ -189,6 +189,51 @@ EventManager.prototype.once = function once (element, eventName, handler) {
   ee.bind(eventName, onceHandler);
 };
 
+var ScrollType={
+    //scrollTop: (element,value)=>{if(typeof value!=='undefined') element.scrollTop=value; else return element.scrollTop},
+    scrollTop: function (element,value){
+            var h;
+            if(typeof value!=='undefined') {  // MDN on scrollTop: If set to a value greater than the maximum available for the element, scrollTop settles itself to the maximum value.
+                if(value<0)
+                    { value=0; }
+                else if(value>(h=(element.children[0].scrollHeight-element.getBoundingClientRect().height)))
+                    { value=h; }
+                element.children[0].style.top= -value+'px';
+            } else 
+                { return -parseFloat(element.children[0].style.top)||0 }
+        }, 
+    //scrollHeight: (element)=>element.scrollHeight,
+    scrollHeight: function (element){ return element.children[0].scrollHeight; }, // the scrollHeight of parent will be increased/decreased by the amount of children[0].top get it from the child
+    //scrollWidth: (element)=>element.scrollWidth,
+    scrollWidth: function (element){ return element.children[0].scrollWidth; }, // the scrollHeight of parent will be increased/decreased by the amount of children[0].top get it from the child
+    //scrollLeft: (element,value)=>{if(typeof value!=='undefined') element.scrollLeft=value; else return element.scrollLeft}
+    scrollLeft: function (element,value){
+        var w;
+        if(typeof value!=='undefined') {  // MDN on scrollTop: If set to a value greater than the maximum available for the element, scrollTop settles itself to the maximum value.
+            if(value<0)
+                { value=0; }
+            else if(value>(w=(element.children[0].scrollWidth-element.getBoundingClientRect().width)))
+                { value=w; }
+            element.children[0].style.left= -value+'px';
+        } else 
+            { return -parseInt(element.children[0].style.left)||0 }
+    },
+    //scrollWidth: (element)=>element.scrollWidth,
+    scrollWidth: function (element){ return element.children[0].scrollWidth; }, // see comment about scrollHeight
+    //yRailOffset: (element)=>(element)=>element.scrollHeight,
+    yRailOffset: function (element){ return 0; }, // the yRail does not move, only the child div moves.
+    //yRailLeft: (element)=>element.scrollLeft,
+    yRailLeft: function (element){ return 0; },
+    //xRailOffsetLeft: (element)=>(element)=>element.scrollLeft,
+    xRailOffsetLeft: function (i){ return 0; }, // the yRail does not move, only the child div moves.
+    //xRailBottom: (element)=>element.scrollTop,  // as the child scrolls up, the xRail must be moved down so it is alwasy at the bottom of the child window
+    xRailBottom: function (element){ return 0; },  // the xRail does not move, when the child is scrolled, so the bottom is always 0
+    addXRail: function (element,rail){ return element.appendChild(rail); },
+    //addXRail: (element,rail)=>element.insertBefore(rail,element.children[0]),  // for top scrolling - put the rails before the content so they don't move when the content moves
+    addYRail: function (element,rail){ return element.appendChild(rail); },
+    //addYRail: (element,rail)=>element.insertBefore(rail,element.children[1]), // this goes after the XRail (before the content)
+};
+
 function createEvent(name) {
   if (typeof window.CustomEvent === 'function') {
     return new CustomEvent(name);
@@ -255,12 +300,12 @@ function processScrollDiff$1(
   i.reach[y] = null;
 
   // 1 for subpixel rounding
-  if (element[scrollTop] < 1) {
+  if (ScrollType[scrollTop](element) < 1) {
     i.reach[y] = 'start';
   }
 
   // 1 for subpixel rounding
-  if (element[scrollTop] > i[contentHeight] - i[containerHeight] - 1) {
+  if (ScrollType[scrollTop](element) > i[contentHeight] - i[containerHeight] - 1) {
     i.reach[y] = 'end';
   }
 
@@ -312,9 +357,10 @@ var env = {
     typeof document !== 'undefined' &&
     'WebkitAppearance' in document.documentElement.style,
   supportsTouch:
-    typeof window !== 'undefined' &&
-    ('ontouchstart' in window ||
-      (window.DocumentTouch && document instanceof window.DocumentTouch)),
+    'ontouchstart' in window ||
+    window.DocumentTouch && document instanceof window.DocumentTouch ||
+    navigator.maxTouchPoints > 0 ||
+    window.navigator.msMaxTouchPoints > 0,
   supportsIePointer:
     typeof navigator !== 'undefined' && navigator.msMaxTouchPoints,
   isChrome:
@@ -324,12 +370,12 @@ var env = {
 
 var updateGeometry = function(i) {
   var element = i.element;
-  var roundedScrollTop = Math.floor(element.scrollTop);
+  var roundedScrollTop = Math.floor(ScrollType.scrollTop(element));
 
   i.containerWidth = element.clientWidth;
   i.containerHeight = element.clientHeight;
-  i.contentWidth = element.scrollWidth;
-  i.contentHeight = element.scrollHeight;
+  i.contentWidth = ScrollType.scrollWidth(element);
+  i.contentHeight = ScrollType.scrollHeight(element);
 
   if (!element.contains(i.scrollbarXRail)) {
     // clean up and append
@@ -356,7 +402,7 @@ var updateGeometry = function(i) {
       toInt(i.railXWidth * i.containerWidth / i.contentWidth)
     );
     i.scrollbarXLeft = toInt(
-      (i.negativeScrollAdjustment + element.scrollLeft) *
+      (i.negativeScrollAdjustment + ScrollType.scrollLeft(element)) *
         (i.railXWidth - i.scrollbarXWidth) /
         (i.contentWidth - i.containerWidth)
     );
@@ -399,7 +445,7 @@ var updateGeometry = function(i) {
     element.classList.remove(cls.state.active('x'));
     i.scrollbarXWidth = 0;
     i.scrollbarXLeft = 0;
-    element.scrollLeft = 0;
+    ScrollType.scrollLeft(element,0);
   }
   if (i.scrollbarYActive) {
     element.classList.add(cls.state.active('y'));
@@ -407,7 +453,7 @@ var updateGeometry = function(i) {
     element.classList.remove(cls.state.active('y'));
     i.scrollbarYHeight = 0;
     i.scrollbarYTop = 0;
-    element.scrollTop = 0;
+    ScrollType.scrollTop(element,0);
   }
 };
 
@@ -423,46 +469,46 @@ function getThumbSize(i, thumbSize) {
 
 function updateCss(element, i) {
   var xRailOffset = { width: i.railXWidth };
-  var roundedScrollTop = Math.floor(element.scrollTop);
+  var roundedScrollTop = Math.floor(ScrollType.scrollTop(element));
 
   if (i.isRtl) {
     xRailOffset.left =
       i.negativeScrollAdjustment +
-      element.scrollLeft +
+      ScrollType.scrollLeft(element) +
       i.containerWidth -
       i.contentWidth;
   } else {
-    xRailOffset.left = element.scrollLeft;
+    xRailOffset.left = ScrollType.xRailOffsetLeft(i);
   }
   if (i.isScrollbarXUsingBottom) {
-    xRailOffset.bottom = i.scrollbarXBottom - roundedScrollTop;
+    xRailOffset.bottom = i.scrollbarXBottom - ScrollType.xRailBottom();
   } else {
-    xRailOffset.top = i.scrollbarXTop + roundedScrollTop;
+    xRailOffset.top = i.scrollbarXTop + ScrollType.xRailBottom();
   }
   set(i.scrollbarXRail, xRailOffset);
 
-  var yRailOffset = { top: roundedScrollTop, height: i.railYHeight };
+  var yRailOffset = { top: ScrollType.yRailOffset(element), height: i.railYHeight };
   if (i.isScrollbarYUsingRight) {
     if (i.isRtl) {
       yRailOffset.right =
         i.contentWidth -
-        (i.negativeScrollAdjustment + element.scrollLeft) -
+        (i.negativeScrollAdjustment + ScrollType.yRailLeft(element)) -
         i.scrollbarYRight -
         i.scrollbarYOuterWidth;
     } else {
-      yRailOffset.right = i.scrollbarYRight - element.scrollLeft;
+      yRailOffset.right = i.scrollbarYRight - ScrollType.yRailLeft(element);
     }
   } else {
     if (i.isRtl) {
       yRailOffset.left =
         i.negativeScrollAdjustment +
-        element.scrollLeft +
+        ScrollType.scrollLeft(element) +
         i.containerWidth * 2 -
         i.contentWidth -
         i.scrollbarYLeft -
         i.scrollbarYOuterWidth;
     } else {
-      yRailOffset.left = i.scrollbarYLeft + element.scrollLeft;
+      yRailOffset.left = i.scrollbarYLeft + ScrollType.scrollLeft(element);
     }
   }
   set(i.scrollbarYRail, yRailOffset);
@@ -478,6 +524,8 @@ function updateCss(element, i) {
 }
 
 var clickRail = function(i) {
+  var element = i.element;
+
   i.event.bind(i.scrollbarY, 'mousedown', function (e) { return e.stopPropagation(); });
   i.event.bind(i.scrollbarYRail, 'mousedown', function (e) {
     var positionTop =
@@ -486,7 +534,7 @@ var clickRail = function(i) {
       i.scrollbarYRail.getBoundingClientRect().top;
     var direction = positionTop > i.scrollbarYTop ? 1 : -1;
 
-    i.element.scrollTop += direction * i.containerHeight;
+    ScrollType.scrollTop(i.element,ScrollType.scrollTop(i.element)+(direction * i.containerHeight));
     updateGeometry(i);
 
     e.stopPropagation();
@@ -500,7 +548,7 @@ var clickRail = function(i) {
       i.scrollbarXRail.getBoundingClientRect().left;
     var direction = positionLeft > i.scrollbarXLeft ? 1 : -1;
 
-    i.element.scrollLeft += direction * i.containerWidth;
+    ScrollType.scrollLeft(element,ScrollType.scrollLeft(element) + (direction * i.containerWidth));
     updateGeometry(i);
 
     e.stopPropagation();
@@ -551,8 +599,7 @@ function bindMouseScrollHandler(
   var scrollBy = null;
 
   function mouseMoveHandler(e) {
-    element[scrollTop] =
-      startingScrollTop + scrollBy * (e[pageY] - startingMousePageY);
+    ScrollType[scrollTop](element,  startingScrollTop + scrollBy * (e[pageY] - startingMousePageY) );
     addScrollingClass(i, y);
     updateGeometry(i);
 
@@ -567,7 +614,7 @@ function bindMouseScrollHandler(
   }
 
   i.event.bind(i[scrollbarY], 'mousedown', function (e) {
-    startingScrollTop = element[scrollTop];
+    startingScrollTop = ScrollType[scrollTop](element);
     startingMousePageY = e[pageY];
     scrollBy =
       (i[contentHeight] - i[containerHeight]) /
@@ -590,7 +637,7 @@ var keyboard = function(i) {
   var scrollbarFocused = function () { return matches(i.scrollbarX, ':focus') || matches(i.scrollbarY, ':focus'); };
 
   function shouldPreventDefault(deltaX, deltaY) {
-    var scrollTop = Math.floor(element.scrollTop);
+    var scrollTop = Math.floor(ScrollType.scrollTop(element));
     if (deltaX === 0) {
       if (!i.scrollbarYActive) {
         return false;
@@ -603,7 +650,7 @@ var keyboard = function(i) {
       }
     }
 
-    var scrollLeft = element.scrollLeft;
+    var scrollLeft = ScrollType.scrollLeft(element);
     if (deltaY === 0) {
       if (!i.scrollbarXActive) {
         return false;
@@ -717,8 +764,8 @@ var keyboard = function(i) {
       return;
     }
 
-    element.scrollTop -= deltaY;
-    element.scrollLeft += deltaX;
+    ScrollType.scrollTop(element, ScrollType.scrollTop(element)-deltaY);
+    ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)+deltaX);
     updateGeometry(i);
 
     if (shouldPreventDefault(deltaX, deltaY)) {
@@ -731,13 +778,13 @@ var wheel = function(i) {
   var element = i.element;
 
   function shouldPreventDefault(deltaX, deltaY) {
-    var roundedScrollTop = Math.floor(element.scrollTop);
-    var isTop = element.scrollTop === 0;
+    var roundedScrollTop = Math.floor(ScrollType.scrollTop(element));
+    var isTop = ScrollType.scrollTop(element) === 0;
     var isBottom =
-      roundedScrollTop + element.offsetHeight === element.scrollHeight;
-    var isLeft = element.scrollLeft === 0;
+      roundedScrollTop + element.offsetHeight === ScrollType.scrollHeight(element);
+    var isLeft = ScrollType.scrollLeft(element) === 0;
     var isRight =
-      element.scrollLeft + element.offsetWidth === element.scrollWidth;
+      ScrollType.scrollLeft(element) + element.offsetWidth === element.scrollWidth;
 
     var hitsBound;
 
@@ -804,11 +851,11 @@ var wheel = function(i) {
 
       // if scrollable
       if (overflow.match(/(scroll|auto)/)) {
-        var maxScrollTop = cursor.scrollHeight - cursor.clientHeight;
+        var maxScrollTop = ScrollType.scrollHeight(cursor) - cursor.clientHeight;
         if (maxScrollTop > 0) {
           if (
-            !(cursor.scrollTop === 0 && deltaY > 0) &&
-            !(cursor.scrollTop === maxScrollTop && deltaY < 0)
+            !(ScrollType.scrollTop(cursor) === 0 && deltaY > 0) &&
+            !(ScrollType.scrollTop(cursor) === maxScrollTop && deltaY < 0)
           ) {
             return true;
           }
@@ -816,8 +863,8 @@ var wheel = function(i) {
         var maxScrollLeft = cursor.scrollWidth - cursor.clientWidth;
         if (maxScrollLeft > 0) {
           if (
-            !(cursor.scrollLeft === 0 && deltaX < 0) &&
-            !(cursor.scrollLeft === maxScrollLeft && deltaX > 0)
+            !(ScrollType.scrollLeft(cursor) === 0 && deltaX < 0) &&
+            !(ScrollType.scrollLeft(cursor) === maxScrollLeft && deltaX > 0)
           ) {
             return true;
           }
@@ -843,24 +890,24 @@ var wheel = function(i) {
     if (!i.settings.useBothWheelAxes) {
       // deltaX will only be used for horizontal scrolling and deltaY will
       // only be used for vertical scrolling - this is the default
-      element.scrollTop -= deltaY * i.settings.wheelSpeed;
-      element.scrollLeft += deltaX * i.settings.wheelSpeed;
+      ScrollType.scrollTop(element,ScrollType.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
+      ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
     } else if (i.scrollbarYActive && !i.scrollbarXActive) {
       // only vertical scrollbar is active and useBothWheelAxes option is
       // active, so let's scroll vertical bar using both mouse wheel axes
       if (deltaY) {
-        element.scrollTop -= deltaY * i.settings.wheelSpeed;
+        ScrollType.scrollTop(element,ScrollType.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
       } else {
-        element.scrollTop += deltaX * i.settings.wheelSpeed;
+        ScrollType.scrollTop(element,ScrollType.scrollTop(element) + (deltaX * i.settings.wheelSpeed));
       }
       shouldPrevent = true;
     } else if (i.scrollbarXActive && !i.scrollbarYActive) {
       // useBothWheelAxes and only horizontal bar is active, so use both
       // wheel axes for horizontal bar
       if (deltaX) {
-        element.scrollLeft += deltaX * i.settings.wheelSpeed;
+        ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
       } else {
-        element.scrollLeft -= deltaY * i.settings.wheelSpeed;
+        ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)-(deltaX * i.settings.wheelSpeed));
       }
       shouldPrevent = true;
     }
@@ -889,8 +936,8 @@ var touch = function(i) {
   var element = i.element;
 
   function shouldPrevent(deltaX, deltaY) {
-    var scrollTop = Math.floor(element.scrollTop);
-    var scrollLeft = element.scrollLeft;
+    var scrollTop = Math.floor(ScrollType.scrollTop(element));
+    var scrollLeft = ScrollType.scrollLeft(element);
     var magnitudeX = Math.abs(deltaX);
     var magnitudeY = Math.abs(deltaY);
 
@@ -919,8 +966,8 @@ var touch = function(i) {
   }
 
   function applyTouchMove(differenceX, differenceY) {
-    element.scrollTop -= differenceY;
-    element.scrollLeft -= differenceX;
+    ScrollType.scrollTop(element, ScrollType.scrollTop(element) - differenceY );
+    ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)-differenceX);
 
     updateGeometry(i);
   }
@@ -992,20 +1039,20 @@ var touch = function(i) {
 
       // if scrollable
       if (overflow.match(/(scroll|auto)/)) {
-        var maxScrollTop = cursor.scrollHeight - cursor.clientHeight;
+        var maxScrollTop = ScrollType.scrollHeight(cursor) - cursor.clientHeight;
         if (maxScrollTop > 0) {
           if (
-            !(cursor.scrollTop === 0 && deltaY > 0) &&
-            !(cursor.scrollTop === maxScrollTop && deltaY < 0)
+            !(ScrollType.scrollTop(cursor) === 0 && deltaY > 0) &&
+            !(ScrollType.scrollTop(cursor) === maxScrollTop && deltaY < 0)
           ) {
             return true;
           }
         }
-        var maxScrollLeft = cursor.scrollLeft - cursor.clientWidth;
+        var maxScrollLeft = ScrollType.scrollLeft(cursor) - cursor.clientWidth;
         if (maxScrollLeft > 0) {
           if (
-            !(cursor.scrollLeft === 0 && deltaX < 0) &&
-            !(cursor.scrollLeft === maxScrollLeft && deltaX > 0)
+            !(ScrollType.scrollLeft(cursor) === 0 && deltaX < 0) &&
+            !(ScrollType.scrollLeft(cursor) === maxScrollLeft && deltaX > 0)
           ) {
             return true;
           }
@@ -1144,23 +1191,14 @@ var PerfectScrollbar = function PerfectScrollbar(element, userSettings) {
   var focus = function () { return element.classList.add(cls.state.focus); };
   var blur = function () { return element.classList.remove(cls.state.focus); };
 
-  this.isRtl = get(element).direction === 'rtl';
-  this.isNegativeScroll = (function () {
-    var originalScrollLeft = element.scrollLeft;
-    var result = null;
-    element.scrollLeft = -1;
-    result = element.scrollLeft < 0;
-    element.scrollLeft = originalScrollLeft;
-    return result;
-  })();
-  this.negativeScrollAdjustment = this.isNegativeScroll
-    ? element.scrollWidth - element.clientWidth
-    : 0;
+  this.isRtl = get(element).direction === 'rtl'; //is Right To Left language
+
   this.event = new EventManager();
   this.ownerDocument = element.ownerDocument || document;
 
   this.scrollbarXRail = div(cls.element.rail('x'));
-  element.appendChild(this.scrollbarXRail);
+  ScrollType.addXRail(element,this.scrollbarXRail);
+  //element.appendChild(this.scrollbarXRail);
   this.scrollbarX = div(cls.element.thumb('x'));
   this.scrollbarXRail.appendChild(this.scrollbarX);
   this.scrollbarX.setAttribute('tabindex', 0);
@@ -1188,7 +1226,8 @@ var PerfectScrollbar = function PerfectScrollbar(element, userSettings) {
   this.railXRatio = null;
 
   this.scrollbarYRail = div(cls.element.rail('y'));
-  element.appendChild(this.scrollbarYRail);
+  //element.appendChild(this.scrollbarYRail);
+  ScrollType.addYRail(element,this.scrollbarYRail);
   this.scrollbarY = div(cls.element.thumb('y'));
   this.scrollbarYRail.appendChild(this.scrollbarY);
   this.scrollbarY.setAttribute('tabindex', 0);
@@ -1215,17 +1254,30 @@ var PerfectScrollbar = function PerfectScrollbar(element, userSettings) {
   this.railYHeight = null;
   this.railYRatio = null;
 
+  // moved this below rail setup because ScrollType.scrollLeft looks for the content in the 3rd child if top scrolling -- it must be set before updateGeometry
+  this.isNegativeScroll = (function () {
+    var originalScrollLeft = ScrollType.scrollLeft(element);
+    var result = null;
+    ScrollType.scrollLeft(element, -1);
+    result = ScrollType.scrollLeft(element) < 0;
+    ScrollType.scrollLeft(element,originalScrollLeft);
+    return result;
+  })();
+  this.negativeScrollAdjustment = this.isNegativeScroll
+    ? element.scrollWidth - element.clientWidth
+    : 0;
+
   this.reach = {
     x:
-      element.scrollLeft <= 0
+      ScrollType.scrollLeft(element) <= 0
         ? 'start'
-        : element.scrollLeft >= this.contentWidth - this.containerWidth
+        : ScrollType.scrollLeft(element) >= this.contentWidth - this.containerWidth
           ? 'end'
           : null,
     y:
-      element.scrollTop <= 0
+      ScrollType.scrollTop(element) <= 0
         ? 'start'
-        : element.scrollTop >= this.contentHeight - this.containerHeight
+        : ScrollType.scrollTop(element) >= this.contentHeight - this.containerHeight
           ? 'end'
           : null,
   };
@@ -1234,8 +1286,8 @@ var PerfectScrollbar = function PerfectScrollbar(element, userSettings) {
 
   this.settings.handlers.forEach(function (handlerName) { return handlers[handlerName](this$1); });
 
-  this.lastScrollTop = Math.floor(element.scrollTop); // for onScroll only
-  this.lastScrollLeft = element.scrollLeft; // for onScroll only
+  this.lastScrollTop = Math.floor(ScrollType.scrollTop(element)); // for onScroll only
+  this.lastScrollLeft = ScrollType.scrollLeft(element); // for onScroll only
   this.event.bind(this.element, 'scroll', function (e) { return this$1.onScroll(e); });
   updateGeometry(this);
 };
@@ -1279,15 +1331,15 @@ PerfectScrollbar.prototype.onScroll = function onScroll (e) {
   }
 
   updateGeometry(this);
-  processScrollDiff(this, 'top', this.element.scrollTop - this.lastScrollTop);
+  processScrollDiff(this, 'top', ScrollType.scrollTop(this.element) - this.lastScrollTop);
   processScrollDiff(
     this,
     'left',
-    this.element.scrollLeft - this.lastScrollLeft
+    ScrollType.scrollLeft(this.element) - this.lastScrollLeft
   );
 
-  this.lastScrollTop = Math.floor(this.element.scrollTop);
-  this.lastScrollLeft = this.element.scrollLeft;
+  this.lastScrollTop = Math.floor(ScrollType.scrollTop(this.element));
+  this.lastScrollLeft = ScrollType.scrollLeft(this.element);
 };
 
 PerfectScrollbar.prototype.destroy = function destroy () {

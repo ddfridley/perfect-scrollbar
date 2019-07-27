@@ -2,6 +2,7 @@ import updateGeometry from '../update-geometry';
 import cls from '../lib/class-names';
 import * as CSS from '../lib/css';
 import { env } from '../lib/util';
+import ScrollType from '../lib/scroll-type'
 
 export default function(i) {
   if (!env.supportsTouch && !env.supportsIePointer) {
@@ -11,8 +12,8 @@ export default function(i) {
   const element = i.element;
 
   function shouldPrevent(deltaX, deltaY) {
-    const scrollTop = Math.floor(element.scrollTop);
-    const scrollLeft = element.scrollLeft;
+    const scrollTop = Math.floor(ScrollType.scrollTop(element));
+    const scrollLeft = ScrollType.scrollLeft(element);
     const magnitudeX = Math.abs(deltaX);
     const magnitudeY = Math.abs(deltaY);
 
@@ -41,8 +42,8 @@ export default function(i) {
   }
 
   function applyTouchMove(differenceX, differenceY) {
-    element.scrollTop -= differenceY;
-    element.scrollLeft -= differenceX;
+    ScrollType.scrollTop(element, ScrollType.scrollTop(element) - differenceY )
+    ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)-differenceX)
 
     updateGeometry(i);
   }
@@ -114,20 +115,20 @@ export default function(i) {
 
       // if scrollable
       if (overflow.match(/(scroll|auto)/)) {
-        const maxScrollTop = cursor.scrollHeight - cursor.clientHeight;
+        const maxScrollTop = ScrollType.scrollHeight(cursor) - cursor.clientHeight;
         if (maxScrollTop > 0) {
           if (
-            !(cursor.scrollTop === 0 && deltaY > 0) &&
-            !(cursor.scrollTop === maxScrollTop && deltaY < 0)
+            !(ScrollType.scrollTop(cursor) === 0 && deltaY > 0) &&
+            !(ScrollType.scrollTop(cursor) === maxScrollTop && deltaY < 0)
           ) {
             return true;
           }
         }
-        const maxScrollLeft = cursor.scrollLeft - cursor.clientWidth;
+        const maxScrollLeft = ScrollType.scrollLeft(cursor) - cursor.clientWidth;
         if (maxScrollLeft > 0) {
           if (
-            !(cursor.scrollLeft === 0 && deltaX < 0) &&
-            !(cursor.scrollLeft === maxScrollLeft && deltaX > 0)
+            !(ScrollType.scrollLeft(cursor) === 0 && deltaX < 0) &&
+            !(ScrollType.scrollLeft(cursor) === maxScrollLeft && deltaX > 0)
           ) {
             return true;
           }

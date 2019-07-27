@@ -11,6 +11,7 @@ import dragThumb from './handlers/drag-thumb';
 import keyboard from './handlers/keyboard';
 import wheel from './handlers/mouse-wheel';
 import touch from './handlers/touch';
+import ScrollType from './lib/scroll-type'
 
 const defaultSettings = () => ({
   handlers: ['click-rail', 'drag-thumb', 'keyboard', 'wheel', 'touch'],
@@ -62,23 +63,14 @@ export default class PerfectScrollbar {
     const focus = () => element.classList.add(cls.state.focus);
     const blur = () => element.classList.remove(cls.state.focus);
 
-    this.isRtl = CSS.get(element).direction === 'rtl';
-    this.isNegativeScroll = (() => {
-      const originalScrollLeft = element.scrollLeft;
-      let result = null;
-      element.scrollLeft = -1;
-      result = element.scrollLeft < 0;
-      element.scrollLeft = originalScrollLeft;
-      return result;
-    })();
-    this.negativeScrollAdjustment = this.isNegativeScroll
-      ? element.scrollWidth - element.clientWidth
-      : 0;
+    this.isRtl = CSS.get(element).direction === 'rtl'; //is Right To Left language
+
     this.event = new EventManager();
     this.ownerDocument = element.ownerDocument || document;
 
     this.scrollbarXRail = DOM.div(cls.element.rail('x'));
-    element.appendChild(this.scrollbarXRail);
+    ScrollType.addXRail(element,this.scrollbarXRail);
+    //element.appendChild(this.scrollbarXRail);
     this.scrollbarX = DOM.div(cls.element.thumb('x'));
     this.scrollbarXRail.appendChild(this.scrollbarX);
     this.scrollbarX.setAttribute('tabindex', 0);
@@ -106,7 +98,8 @@ export default class PerfectScrollbar {
     this.railXRatio = null;
 
     this.scrollbarYRail = DOM.div(cls.element.rail('y'));
-    element.appendChild(this.scrollbarYRail);
+    //element.appendChild(this.scrollbarYRail);
+    ScrollType.addYRail(element,this.scrollbarYRail);
     this.scrollbarY = DOM.div(cls.element.thumb('y'));
     this.scrollbarYRail.appendChild(this.scrollbarY);
     this.scrollbarY.setAttribute('tabindex', 0);
@@ -133,17 +126,30 @@ export default class PerfectScrollbar {
     this.railYHeight = null;
     this.railYRatio = null;
 
+    // moved this below rail setup because ScrollType.scrollLeft looks for the content in the 3rd child if top scrolling -- it must be set before updateGeometry
+    this.isNegativeScroll = (() => {
+      const originalScrollLeft = ScrollType.scrollLeft(element);
+      let result = null;
+      ScrollType.scrollLeft(element, -1);
+      result = ScrollType.scrollLeft(element) < 0;
+      ScrollType.scrollLeft(element,originalScrollLeft);
+      return result;
+    })();
+    this.negativeScrollAdjustment = this.isNegativeScroll
+      ? element.scrollWidth - element.clientWidth
+      : 0;
+
     this.reach = {
       x:
-        element.scrollLeft <= 0
+        ScrollType.scrollLeft(element) <= 0
           ? 'start'
-          : element.scrollLeft >= this.contentWidth - this.containerWidth
+          : ScrollType.scrollLeft(element) >= this.contentWidth - this.containerWidth
             ? 'end'
             : null,
       y:
-        element.scrollTop <= 0
+        ScrollType.scrollTop(element) <= 0
           ? 'start'
-          : element.scrollTop >= this.contentHeight - this.containerHeight
+          : ScrollType.scrollTop(element) >= this.contentHeight - this.containerHeight
             ? 'end'
             : null,
     };
@@ -152,8 +158,8 @@ export default class PerfectScrollbar {
 
     this.settings.handlers.forEach(handlerName => handlers[handlerName](this));
 
-    this.lastScrollTop = Math.floor(element.scrollTop); // for onScroll only
-    this.lastScrollLeft = element.scrollLeft; // for onScroll only
+    this.lastScrollTop = Math.floor(ScrollType.scrollTop(element)); // for onScroll only
+    this.lastScrollLeft = ScrollType.scrollLeft(element); // for onScroll only
     this.event.bind(this.element, 'scroll', e => this.onScroll(e));
     updateGeometry(this);
   }
@@ -197,15 +203,15 @@ export default class PerfectScrollbar {
     }
 
     updateGeometry(this);
-    processScrollDiff(this, 'top', this.element.scrollTop - this.lastScrollTop);
+    processScrollDiff(this, 'top', ScrollType.scrollTop(this.element) - this.lastScrollTop);
     processScrollDiff(
       this,
       'left',
-      this.element.scrollLeft - this.lastScrollLeft
+      ScrollType.scrollLeft(this.element) - this.lastScrollLeft
     );
 
-    this.lastScrollTop = Math.floor(this.element.scrollTop);
-    this.lastScrollLeft = this.element.scrollLeft;
+    this.lastScrollTop = Math.floor(ScrollType.scrollTop(this.element));
+    this.lastScrollLeft = ScrollType.scrollLeft(this.element);
   }
 
   destroy() {
