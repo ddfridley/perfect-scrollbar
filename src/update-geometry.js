@@ -7,9 +7,10 @@ import ScrollType from './lib/scroll-type'
 export default function(i) {
   const element = i.element;
   const roundedScrollTop = Math.floor(ScrollType.scrollTop(element));
+  const rect = element.getBoundingClientRect();
 
-  i.containerWidth = element.clientWidth;
-  i.containerHeight = element.clientHeight;
+  i.containerWidth = Math.ceil(rect.width);
+  i.containerHeight = Math.ceil(rect.height);
   i.contentWidth = ScrollType.scrollWidth(element);
   i.contentHeight = ScrollType.scrollHeight(element);
 
@@ -83,7 +84,7 @@ export default function(i) {
     element.classList.remove(cls.state.active('x'));
     i.scrollbarXWidth = 0;
     i.scrollbarXLeft = 0;
-    ScrollType.scrollLeft(element,0);
+    ScrollType.scrollLeft(element,i.isRtl === true ? i.contentWidth : 0);
   }
   if (i.scrollbarYActive) {
     element.classList.add(cls.state.active('y'));
@@ -132,7 +133,8 @@ function updateCss(element, i) {
         i.contentWidth -
         (i.negativeScrollAdjustment + ScrollType.yRailLeft(element)) -
         i.scrollbarYRight -
-        i.scrollbarYOuterWidth;
+        i.scrollbarYOuterWidth -
+        9;
     } else {
       yRailOffset.right = i.scrollbarYRight - ScrollType.yRailLeft(element);
     }

@@ -63,8 +63,21 @@ export default class PerfectScrollbar {
     const focus = () => element.classList.add(cls.state.focus);
     const blur = () => element.classList.remove(cls.state.focus);
 
-    this.isRtl = CSS.get(element).direction === 'rtl'; //is Right To Left language
-
+    this.isRtl = CSS.get(element).direction === 'rtl';
+    if (this.isRtl === true) {
+      element.classList.add(cls.rtl);
+    }
+    this.isNegativeScroll = (() => {
+      const originalScrollLeft = element.scrollLeft;
+      let result = null;
+      element.scrollLeft = -1;
+      result = element.scrollLeft < 0;
+      element.scrollLeft = originalScrollLeft;
+      return result;
+    })();
+    this.negativeScrollAdjustment = this.isNegativeScroll
+      ? element.scrollWidth - element.clientWidth
+      : 0;
     this.event = new EventManager();
     this.ownerDocument = element.ownerDocument || document;
 

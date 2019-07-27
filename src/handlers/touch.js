@@ -110,26 +110,26 @@ export default function(i) {
       }
 
       const style = CSS.get(cursor);
-      const overflow = [style.overflow, style.overflowX, style.overflowY].join(
-        ''
-      );
-
-      // if scrollable
-      if (overflow.match(/(scroll|auto)/)) {
+      
+      // if deltaY && vertical scrollable
+      if (deltaY && style.overflowY.match(/(scroll|auto)/)) {
         const maxScrollTop = ScrollType.scrollHeight(cursor) - cursor.clientHeight;
         if (maxScrollTop > 0) {
           if (
-            !(ScrollType.scrollTop(cursor) === 0 && deltaY > 0) &&
-            !(ScrollType.scrollTop(cursor) === maxScrollTop && deltaY < 0)
+            (ScrollType.scrollTop(cursor) > 0 && deltaY < 0) ||
+            (ScrollType.scrollTop(cursor) < maxScrollTop && deltaY > 0)
           ) {
             return true;
           }
         }
+      }
+      // if deltaX && horizontal scrollable
+      if (deltaX && style.overflowX.match(/(scroll|auto)/)) {
         const maxScrollLeft = ScrollType.scrollLeft(cursor) - cursor.clientWidth;
         if (maxScrollLeft > 0) {
           if (
-            !(ScrollType.scrollLeft(cursor) === 0 && deltaX < 0) &&
-            !(ScrollType.scrollLeft(cursor) === maxScrollLeft && deltaX > 0)
+            (ScrollType.scrollLeft(cursor) > 0 && deltaX < 0) ||
+            (ScrollType.scrollLeft(cursor) < maxScrollLeft && deltaX > 0)
           ) {
             return true;
           }
