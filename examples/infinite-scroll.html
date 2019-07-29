@@ -61,6 +61,7 @@
 
     <br>
     <div id="container" class="w-50">
+      <div id="content" style="position: relative;"></div>
     </div>
 
   </section>
@@ -87,7 +88,7 @@
 
       function addEntries() {
         for (var i = 0; i < 10; i++) {
-          $('#container').innerHTML +=
+          $('#content').innerHTML +=
             '<div class="entryPlaceholder">I love <a href="https://mdbootstrap.com?utm_campaign=PS&utm_source=Package">Material Design</a> #' +
             (x++) + '</div>';
         }
@@ -98,7 +99,7 @@
 
       $('#container').addEventListener('ps-y-reach-end', function () {
         addEntries();
-        ps.update();
+        //ps.update();
       });
 
     </script>

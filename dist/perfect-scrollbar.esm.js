@@ -184,6 +184,16 @@ EventManager.prototype.once = function once (element, eventName, handler) {
   ee.bind(eventName, onceHandler);
 };
 
+function createEvent$1(name) {
+    if (typeof window.CustomEvent === 'function') {
+      return new CustomEvent(name);
+    } else {
+      var evt = document.createEvent('CustomEvent');
+      evt.initCustomEvent(name, false, false, undefined);
+      return evt;
+    }
+  }
+  
 var ScrollType={
     //scrollTop: (element,value)=>{if(typeof value!=='undefined') element.scrollTop=value; else return element.scrollTop},
     scrollTop: function (element,value){
@@ -227,6 +237,8 @@ var ScrollType={
     //addXRail: (element,rail)=>element.insertBefore(rail,element.children[0]),  // for top scrolling - put the rails before the content so they don't move when the content moves
     addYRail: function (element,rail){ return element.appendChild(rail); },
     //addYRail: (element,rail)=>element.insertBefore(rail,element.children[1]), // this goes after the XRail (before the content)
+    //onScroll: ()=>{},
+    onScroll: function (i){ return i.element.dispatchEvent(createEvent$1("scroll")); },  // the onscroll event isn't triggered by scrolling with top
 };
 
 function createEvent(name) {
@@ -932,7 +944,8 @@ var wheel = function(i) {
     if (shouldPrevent && !e.ctrlKey) {
       e.stopPropagation();
       e.preventDefault();
-    }
+    } else
+      { ScrollType.onScroll(i); }
   }
 
   if (typeof window.onwheel !== 'undefined') {

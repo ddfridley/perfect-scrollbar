@@ -148,7 +148,8 @@ export default function(i) {
     if (shouldPrevent && !e.ctrlKey) {
       e.stopPropagation();
       e.preventDefault();
-    }
+    } else
+      ScrollType.onScroll(i);
   }
 
   if (typeof window.onwheel !== 'undefined') {
