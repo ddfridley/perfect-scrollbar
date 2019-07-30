@@ -885,12 +885,16 @@ var wheel = function(i) {
       // deltaX will only be used for horizontal scrolling and deltaY will
       // only be used for vertical scrolling - this is the default
 
-      if(i.ST.scrollTop(element)===0 && deltaY<0 && (i.containerHeight >= i.contentHeight) && !i.initialYReachEndSend){  // user wants to load more data
-        i.element.style.maxHeight=i.containerHeight+'px';
-        i.initialYReachEndSend=true;
-        i.element.dispatchEvent(createEvent$1("ps-y-reach-end"));
+      if(i.ST.scrollTop(element)===0 && deltaY<0 && (i.containerHeight >= i.contentHeight)){  // user wants to load more data
+        if(!i.initialYReachEndSend) {
+          i.element.style.maxHeight=i.containerHeight+'px';
+          i.initialYReachEndSend=true;
+          i.element.dispatchEvent(createEvent$1("ps-y-reach-end"));
+          shouldPrevent=true; 
+        }else {
+          shouldPrevent=true; 
+        }
       }
-
       i.ST.scrollTop(element,i.ST.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
       i.ST.scrollLeft(element,i.ST.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
     } else if (i.scrollbarYActive && !i.scrollbarXActive) {
