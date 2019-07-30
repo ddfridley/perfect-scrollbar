@@ -125,6 +125,15 @@ export default function(i) {
       return;
     }
 
+    // early update of continer dimensions - will be updated again in updateGeomoetry
+    // geometry may change due to transitions and other external factors
+    const rect = i.element.getBoundingClientRect();
+    i.containerWidth = Math.ceil(rect.width);
+    i.containerHeight = Math.ceil(rect.height);
+    i.contentWidth = i.ST.scrollWidth(i.element);
+    i.contentHeight = i.ST.scrollHeight(i.element);
+  
+
     let shouldPrevent = false;
     if (!i.settings.useBothWheelAxes) {
       // deltaX will only be used for horizontal scrolling and deltaY will
