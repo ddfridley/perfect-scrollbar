@@ -26,6 +26,8 @@ const defaultSettings = () => ({
   useBothWheelAxes: false,
   wheelPropagation: true,
   wheelSpeed: 1,
+  forceFireReachEvent: false,
+  useTopAndLeft: false
 });
 
 const handlers = {
@@ -54,6 +56,8 @@ export default class PerfectScrollbar {
     for (const key in userSettings) {
       this.settings[key] = userSettings[key];
     }
+
+    this.ST=ScrollType[this.settings.useTopAndLeft ? 'useTopAndLeft' : 'default'];
 
     this.containerWidth = null;
     this.containerHeight = null;
@@ -216,11 +220,12 @@ export default class PerfectScrollbar {
     }
 
     updateGeometry(this);
-    processScrollDiff(this, 'top', ScrollType.scrollTop(this.element) - this.lastScrollTop);
+    processScrollDiff(this, 'top', ScrollType.scrollTop(this.element) - this.lastScrollTop, this.settings.forceFireReachEvent);
     processScrollDiff(
       this,
       'left',
-      ScrollType.scrollLeft(this.element) - this.lastScrollLeft
+      ScrollType.scrollLeft(this.element) - this.lastScrollLeft,
+      this.settings.forceFireReachEvent
     );
 
     this.lastScrollTop = Math.floor(ScrollType.scrollTop(this.element));

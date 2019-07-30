@@ -25,7 +25,6 @@
 
     #container {
       background-color: rgb(255, 255, 255);
-      height: 400px;
       width: 100%;
       overflow: auto;
       margin: 100px auto;
@@ -95,7 +94,7 @@
       }
 
       addEntries();
-      var ps = new PerfectScrollbar('#container');
+      var ps = new PerfectScrollbar('#container',{forceFireReachEvent: true});
 
       $('#container').addEventListener('ps-y-reach-end', function () {
         addEntries();

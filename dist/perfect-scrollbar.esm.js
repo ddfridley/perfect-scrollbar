@@ -195,17 +195,67 @@ function createEvent$1(name) {
   }
   
 var ScrollType={
+    default: {
+        scrollTop: function (element,value){if(typeof value!=='undefined') { element.scrollTop=value; } else { return element.scrollTop }},
+        scrollHeight: function (element){ return element.scrollHeight; },
+        scrollWidth: function (element){ return element.scrollWidth; },
+        scrollLeft: function (element,value){if(typeof value!=='undefined') { element.scrollLeft=value; } else { return element.scrollLeft }},
+        scrollWidth: function (element){ return element.scrollWidth; },
+        yRailOffset: function (element){ return element.scrollHeight; },
+        yRailLeft: function (element){ return element.scrollLeft; },
+        xRailOffsetLeft: function (element){ return element.scrollLeft; },
+        xRailBottom: function (element){ return element.scrollTop; },  // as the child scrolls up, the xRail must be moved down so it is alwasy at the bottom of the child window
+        addXRail: function (element,rail){ return element.appendChild(rail); },
+        addYRail: function (element,rail){ return element.appendChild(rail); },
+        onScroll: function (){},
+    },
+    useTopAndLeft: {
+        scrollTop: function (element,value){
+            var h;
+            if(typeof value!=='undefined') {  // MDN on scrollTop: If set to a value greater than the maximum available for the element, scrollTop settles itself to the maximum value.
+                value = Math.round(value);
+                if(value>(h=(element.children[0].scrollHeight-element.offsetHeight)))
+                    { value=h; }
+                if(value<0) // h above could be -1 if the container size is the same as the content size, and it's not an integer height
+                    { value=0; }
+                element.children[0].style.top= -value+'px';
+            } else 
+                { return -Math.round(parseFloat(element.children[0].style.top))||0 }
+        }, 
+        scrollHeight: function (element){ return element.children[0].scrollHeight; }, // the scrollHeight of parent will be increased/decreased by the amount of children[0].top get it from the child
+        scrollWidth: function (element){ return element.children[0].scrollWidth; }, // the scrollHeight of parent will be increased/decreased by the amount of children[0].top get it from the child
+        scrollLeft: function (element,value){
+            var w;
+            if(typeof value!=='undefined') {  // MDN on scrollTop: If set to a value greater than the maximum available for the element, scrollTop settles itself to the maximum value.
+                value = Math.round(value);
+                if(value>(w=(element.children[0].scrollWidth-element.OffsetWidth)))
+                    { value=w; }
+                if(value<0) // w above could be -1 if the container size is the same as the content size, and it's not an integer width
+                    { value=0; }
+                element.children[0].style.left= -value+'px';
+            } else 
+                { return -Math.round(parseFloat(element.children[0].style.left))||0 }
+        },
+        scrollWidth: function (element){ return element.children[0].scrollWidth; }, // see comment about scrollHeight
+        yRailOffset: function (element){ return 0; }, // the yRail does not move, only the child div moves.
+        yRailLeft: function (element){ return 0; },
+        xRailOffsetLeft: function (i){ return 0; }, // the yRail does not move, only the child div moves.
+        xRailBottom: function (element){ return 0; },  // the xRail does not move, when the child is scrolled, so the bottom is always 0
+        addXRail: function (element,rail){ return element.appendChild(rail); },
+        addYRail: function (element,rail){ return element.appendChild(rail); },
+        onScroll: function (i){ return i.element.dispatchEvent(createEvent$1("scroll")); },  // the onscroll event isn't triggered by scrolling with top
+    },
     //scrollTop: (element,value)=>{if(typeof value!=='undefined') element.scrollTop=value; else return element.scrollTop},
     scrollTop: function (element,value){
             var h;
             if(typeof value!=='undefined') {  // MDN on scrollTop: If set to a value greater than the maximum available for the element, scrollTop settles itself to the maximum value.
                 if(value<0)
                     { value=0; }
-                else if(value>(h=(element.children[0].scrollHeight-element.getBoundingClientRect().height)))
+                else if(value>(h=(element.children[0].scrollHeight-Math.ceil(element.getBoundingClientRect().height))))
                     { value=h; }
-                element.children[0].style.top= -value+'px';
+                element.children[0].style.top= -Math.ceil(value)+'px';
             } else 
-                { return -parseFloat(element.children[0].style.top)||0 }
+                { return -Math.ceil(parseFloat(element.children[0].style.top))||0 }
         }, 
     //scrollHeight: (element)=>element.scrollHeight,
     scrollHeight: function (element){ return element.children[0].scrollHeight; }, // the scrollHeight of parent will be increased/decreased by the amount of children[0].top get it from the child
@@ -217,11 +267,11 @@ var ScrollType={
         if(typeof value!=='undefined') {  // MDN on scrollTop: If set to a value greater than the maximum available for the element, scrollTop settles itself to the maximum value.
             if(value<0)
                 { value=0; }
-            else if(value>(w=(element.children[0].scrollWidth-element.getBoundingClientRect().width)))
+            else if(value>(w=(element.children[0].scrollWidth-Math.ceil(element.getBoundingClientRect().width))))
                 { value=w; }
-            element.children[0].style.left= -value+'px';
+            element.children[0].style.left= -Math.ceil(value)+'px';
         } else 
-            { return -parseInt(element.children[0].style.left)||0 }
+            { return -Math.ceil(parseFloat(element.children[0].style.left))||0 }
     },
     //scrollWidth: (element)=>element.scrollWidth,
     scrollWidth: function (element){ return element.children[0].scrollWidth; }, // see comment about scrollHeight
@@ -1184,6 +1234,8 @@ var defaultSettings = function () { return ({
   useBothWheelAxes: false,
   wheelPropagation: true,
   wheelSpeed: 1,
+  forceFireReachEvent: false,
+  useTopAndLeft: false
 }); };
 
 var handlers = {
@@ -1214,6 +1266,8 @@ var PerfectScrollbar = function PerfectScrollbar(element, userSettings) {
   for (var key in userSettings) {
     this$1.settings[key] = userSettings[key];
   }
+
+  this.ST=ScrollType[this.settings.useTopAndLeft ? 'useTopAndLeft' : 'default'];
 
   this.containerWidth = null;
   this.containerHeight = null;
@@ -1376,11 +1430,12 @@ PerfectScrollbar.prototype.onScroll = function onScroll (e) {
   }
 
   updateGeometry(this);
-  processScrollDiff(this, 'top', ScrollType.scrollTop(this.element) - this.lastScrollTop);
+  processScrollDiff(this, 'top', ScrollType.scrollTop(this.element) - this.lastScrollTop, this.settings.forceFireReachEvent);
   processScrollDiff(
     this,
     'left',
-    ScrollType.scrollLeft(this.element) - this.lastScrollLeft
+    ScrollType.scrollLeft(this.element) - this.lastScrollLeft,
+    this.settings.forceFireReachEvent
   );
 
   this.lastScrollTop = Math.floor(ScrollType.scrollTop(this.element));
