@@ -6,7 +6,6 @@ import cls, {
 } from '../lib/class-names';
 import updateGeometry from '../update-geometry';
 import { toInt } from '../lib/util';
-import ScrollType from '../lib/scroll-type'
 
 export default function(i) {
   bindMouseScrollHandler(i, [
@@ -57,7 +56,7 @@ function bindMouseScrollHandler(
     if (e.touches && e.touches[0]) {
       e[pageY] = e.touches[0].pageY;
     }
-    ScrollType[scrollTop](element,  startingScrollTop + scrollBy * (e[pageY] - startingMousePageY) )
+    i.ST[scrollTop](element,  startingScrollTop + scrollBy * (e[pageY] - startingMousePageY) )
     addScrollingClass(i, y);
     updateGeometry(i);
 
@@ -72,7 +71,7 @@ function bindMouseScrollHandler(
   }
 
   function bindMoves(e, touchMode) {
-    startingScrollTop = ScrollType[scrollTop](element);
+    startingScrollTop = i.ST[scrollTop](element);
     if (touchMode && e.touches) {
       e[pageY] = e.touches[0].pageY;
     }

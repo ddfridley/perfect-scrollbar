@@ -94,7 +94,7 @@
       }
 
       addEntries();
-      var ps = new PerfectScrollbar('#container',{forceFireReachEvent: true});
+      var ps = new PerfectScrollbar('#container',{useTopAndLeft: true});
 
       $('#container').addEventListener('ps-y-reach-end', function () {
         addEntries();

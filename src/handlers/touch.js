@@ -2,7 +2,6 @@ import updateGeometry from '../update-geometry';
 import cls from '../lib/class-names';
 import * as CSS from '../lib/css';
 import { env } from '../lib/util';
-import ScrollType from '../lib/scroll-type'
 
 export default function(i) {
   // It's impossible to detech if supportsTouch so we have to go for it and hope not to impact performace too much
@@ -13,8 +12,8 @@ export default function(i) {
   const element = i.element;
 
   function shouldPrevent(deltaX, deltaY) {
-    const scrollTop = Math.floor(ScrollType.scrollTop(element));
-    const scrollLeft = ScrollType.scrollLeft(element);
+    const scrollTop = Math.floor(i.ST.scrollTop(element));
+    const scrollLeft = i.ST.scrollLeft(element);
     const magnitudeX = Math.abs(deltaX);
     const magnitudeY = Math.abs(deltaY);
 
@@ -43,8 +42,8 @@ export default function(i) {
   }
 
   function applyTouchMove(differenceX, differenceY) {
-    ScrollType.scrollTop(element, ScrollType.scrollTop(element) - differenceY )
-    ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)-differenceX)
+    i.ST.scrollTop(element, i.ST.scrollTop(element) - differenceY )
+    i.ST.scrollLeft(element,i.ST.scrollLeft(element)-differenceX)
 
     updateGeometry(i);
   }
@@ -113,11 +112,11 @@ export default function(i) {
       
       // if deltaY && vertical scrollable
       if (deltaY && style.overflowY.match(/(scroll|auto)/)) {
-        const maxScrollTop = ScrollType.scrollHeight(cursor) - cursor.clientHeight;
+        const maxScrollTop = i.ST.scrollHeight(cursor) - cursor.clientHeight;
         if (maxScrollTop > 0) {
           if (
-            (ScrollType.scrollTop(cursor) > 0 && deltaY < 0) ||
-            (ScrollType.scrollTop(cursor) < maxScrollTop && deltaY > 0)
+            (i.ST.scrollTop(cursor) > 0 && deltaY < 0) ||
+            (i.ST.scrollTop(cursor) < maxScrollTop && deltaY > 0)
           ) {
             return true;
           }
@@ -125,11 +124,11 @@ export default function(i) {
       }
       // if deltaX && horizontal scrollable
       if (deltaX && style.overflowX.match(/(scroll|auto)/)) {
-        const maxScrollLeft = ScrollType.scrollLeft(cursor) - cursor.clientWidth;
+        const maxScrollLeft = i.ST.scrollLeft(cursor) - cursor.clientWidth;
         if (maxScrollLeft > 0) {
           if (
-            (ScrollType.scrollLeft(cursor) > 0 && deltaX < 0) ||
-            (ScrollType.scrollLeft(cursor) < maxScrollLeft && deltaX > 0)
+            (i.ST.scrollLeft(cursor) > 0 && deltaX < 0) ||
+            (i.ST.scrollLeft(cursor) < maxScrollLeft && deltaX > 0)
           ) {
             return true;
           }

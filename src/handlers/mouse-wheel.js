@@ -2,7 +2,16 @@ import * as CSS from '../lib/css';
 import cls from '../lib/class-names';
 import updateGeometry from '../update-geometry';
 import { env } from '../lib/util';
-import ScrollType from '../lib/scroll-type'
+
+function createEvent(name) {
+  if (typeof window.CustomEvent === 'function') {
+    return new CustomEvent(name);
+  } else {
+    const evt = document.createEvent('CustomEvent');
+    evt.initCustomEvent(name, false, false, undefined);
+    return evt;
+  }
+}
 
 export default function(i) {
   const element = i.element;
@@ -10,13 +19,13 @@ export default function(i) {
   let shouldPrevent = false;
 
   function shouldPreventDefault(deltaX, deltaY) {
-    const roundedScrollTop = Math.floor(ScrollType.scrollTop(element));
-    const isTop = ScrollType.scrollTop(element) === 0;
+    const roundedScrollTop = Math.floor(i.ST.scrollTop(element));
+    const isTop = i.ST.scrollTop(element) === 0;
     const isBottom =
-      roundedScrollTop + element.offsetHeight === ScrollType.scrollHeight(element);
-    const isLeft = ScrollType.scrollLeft(element) === 0;
+      roundedScrollTop + element.offsetHeight === i.ST.scrollHeight(element);
+    const isLeft = i.ST.scrollLeft(element) === 0;
     const isRight =
-      ScrollType.scrollLeft(element) + element.offsetWidth === element.scrollWidth;
+      i.ST.scrollLeft(element) + element.offsetWidth === element.scrollWidth;
 
     let hitsBound;
 
@@ -80,11 +89,11 @@ export default function(i) {
 
       // if deltaY && vertical scrollable
       if (deltaY && style.overflowY.match(/(scroll|auto)/)) {
-        const maxScrollTop = ScrollType.scrollHeight(cursor) - cursor.clientHeight;
+        const maxScrollTop = i.ST.scrollHeight(cursor) - cursor.clientHeight;
         if (maxScrollTop > 0) {
           if (
-            (ScrollType.scrollTop(cursor) > 0 && deltaY < 0) ||
-            (ScrollType.scrollTop(cursor) < maxScrollTop && deltaY > 0)
+            (i.ST.scrollTop(cursor) > 0 && deltaY < 0) ||
+            (i.ST.scrollTop(cursor) < maxScrollTop && deltaY > 0)
           ) {
             return true;
           }
@@ -95,8 +104,8 @@ export default function(i) {
         const maxScrollLeft = cursor.scrollWidth - cursor.clientWidth;
         if (maxScrollLeft > 0) {
           if (
-            (ScrollType.scrollLeft(cursor) > 0 && deltaX < 0) ||
-            (ScrollType.scrollLeft(cursor) < maxScrollLeft && deltaX > 0)
+            (i.ST.scrollLeft(cursor) > 0 && deltaX < 0) ||
+            (i.ST.scrollLeft(cursor) < maxScrollLeft && deltaX > 0)
           ) {
             return true;
           }
@@ -120,24 +129,31 @@ export default function(i) {
     if (!i.settings.useBothWheelAxes) {
       // deltaX will only be used for horizontal scrolling and deltaY will
       // only be used for vertical scrolling - this is the default
-      ScrollType.scrollTop(element,ScrollType.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
-      ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
+
+      if(i.ST.scrollTop(element)===0 && deltaY<0 && (i.containerHeight >= i.contentHeight) && !i.initialYReachEndSend){  // user wants to load more data
+        i.element.style.maxHeight=i.containerHeight+'px';
+        i.initialYReachEndSend=true;
+        i.element.dispatchEvent(createEvent(`ps-y-reach-end`))
+      }
+
+      i.ST.scrollTop(element,i.ST.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
+      i.ST.scrollLeft(element,i.ST.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
     } else if (i.scrollbarYActive && !i.scrollbarXActive) {
       // only vertical scrollbar is active and useBothWheelAxes option is
       // active, so let's scroll vertical bar using both mouse wheel axes
       if (deltaY) {
-        ScrollType.scrollTop(element,ScrollType.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
+        i.ST.scrollTop(element,i.ST.scrollTop(element) - (deltaY * i.settings.wheelSpeed));
       } else {
-        ScrollType.scrollTop(element,ScrollType.scrollTop(element) + (deltaX * i.settings.wheelSpeed));
+        i.ST.scrollTop(element,i.ST.scrollTop(element) + (deltaX * i.settings.wheelSpeed));
       }
       shouldPrevent = true;
     } else if (i.scrollbarXActive && !i.scrollbarYActive) {
       // useBothWheelAxes and only horizontal bar is active, so use both
       // wheel axes for horizontal bar
       if (deltaX) {
-        ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
+        i.ST.scrollLeft(element,i.ST.scrollLeft(element)+(deltaX * i.settings.wheelSpeed));
       } else {
-        ScrollType.scrollLeft(element,ScrollType.scrollLeft(element)-(deltaY * i.settings.wheelSpeed));
+        i.ST.scrollLeft(element,i.ST.scrollLeft(element)-(deltaY * i.settings.wheelSpeed));
       }
       shouldPrevent = true;
     }
@@ -149,7 +165,7 @@ export default function(i) {
       e.stopPropagation();
       e.preventDefault();
     } else
-      ScrollType.onScroll(i);
+      i.ST.onScroll(i);
   }
 
   if (typeof window.onwheel !== 'undefined') {

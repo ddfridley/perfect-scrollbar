@@ -1,5 +1,4 @@
 import { setScrollingClassInstantly } from './lib/class-names';
-import ScrollType from './lib/scroll-type'
 
 function createEvent(name) {
   if (typeof window.CustomEvent === 'function') {
@@ -57,12 +56,12 @@ function processScrollDiff(
   i.reach[y] = null;
 
   // 1 for subpixel rounding
-  if (ScrollType[scrollTop](element) < 1) {
+  if (i.ST[scrollTop](element) < 1) {
     i.reach[y] = 'start';
   }
 
   // 1 for subpixel rounding
-  if (ScrollType[scrollTop](element) > i[contentHeight] - i[containerHeight] - 1) {
+  if (i.ST[scrollTop](element) > i[contentHeight] - i[containerHeight] - 1) {
     i.reach[y] = 'end';
   }
 

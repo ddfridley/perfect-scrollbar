@@ -609,7 +609,7 @@
     <script>
       // Initialize the plugin
       const demo = document.querySelector('#container');
-      const ps = new PerfectScrollbar(demo);
+      const ps = new PerfectScrollbar(demo,{useTopAndLeft: true});
 
       // Handle size change
       document.querySelector('#resize').addEventListener('click', () => {

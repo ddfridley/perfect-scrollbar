@@ -26,7 +26,6 @@ const defaultSettings = () => ({
   useBothWheelAxes: false,
   wheelPropagation: true,
   wheelSpeed: 1,
-  forceFireReachEvent: false,
   useTopAndLeft: false
 });
 
@@ -86,7 +85,7 @@ export default class PerfectScrollbar {
     this.ownerDocument = element.ownerDocument || document;
 
     this.scrollbarXRail = DOM.div(cls.element.rail('x'));
-    ScrollType.addXRail(element,this.scrollbarXRail);
+    this.ST.addXRail(element,this.scrollbarXRail);
     //element.appendChild(this.scrollbarXRail);
     this.scrollbarX = DOM.div(cls.element.thumb('x'));
     this.scrollbarXRail.appendChild(this.scrollbarX);
@@ -116,7 +115,7 @@ export default class PerfectScrollbar {
 
     this.scrollbarYRail = DOM.div(cls.element.rail('y'));
     //element.appendChild(this.scrollbarYRail);
-    ScrollType.addYRail(element,this.scrollbarYRail);
+    this.ST.addYRail(element,this.scrollbarYRail);
     this.scrollbarY = DOM.div(cls.element.thumb('y'));
     this.scrollbarYRail.appendChild(this.scrollbarY);
     this.scrollbarY.setAttribute('tabindex', 0);
@@ -143,13 +142,13 @@ export default class PerfectScrollbar {
     this.railYHeight = null;
     this.railYRatio = null;
 
-    // moved this below rail setup because ScrollType.scrollLeft looks for the content in the 3rd child if top scrolling -- it must be set before updateGeometry
+    // moved this below rail setup because this.ST.scrollLeft looks for the content in the 3rd child if top scrolling -- it must be set before updateGeometry
     this.isNegativeScroll = (() => {
-      const originalScrollLeft = ScrollType.scrollLeft(element);
+      const originalScrollLeft = this.ST.scrollLeft(element);
       let result = null;
-      ScrollType.scrollLeft(element, -1);
-      result = ScrollType.scrollLeft(element) < 0;
-      ScrollType.scrollLeft(element,originalScrollLeft);
+      this.ST.scrollLeft(element, -1);
+      result = this.ST.scrollLeft(element) < 0;
+      this.ST.scrollLeft(element,originalScrollLeft);
       return result;
     })();
     this.negativeScrollAdjustment = this.isNegativeScroll
@@ -158,15 +157,15 @@ export default class PerfectScrollbar {
 
     this.reach = {
       x:
-        ScrollType.scrollLeft(element) <= 0
+        this.ST.scrollLeft(element) <= 0
           ? 'start'
-          : ScrollType.scrollLeft(element) >= this.contentWidth - this.containerWidth
+          : this.ST.scrollLeft(element) >= this.contentWidth - this.containerWidth
             ? 'end'
             : null,
       y:
-        ScrollType.scrollTop(element) <= 0
+        this.ST.scrollTop(element) <= 0
           ? 'start'
-          : ScrollType.scrollTop(element) >= this.contentHeight - this.containerHeight
+          : this.ST.scrollTop(element) >= this.contentHeight - this.containerHeight
             ? 'end'
             : null,
     };
@@ -175,8 +174,8 @@ export default class PerfectScrollbar {
 
     this.settings.handlers.forEach(handlerName => handlers[handlerName](this));
 
-    this.lastScrollTop = Math.floor(ScrollType.scrollTop(element)); // for onScroll only
-    this.lastScrollLeft = ScrollType.scrollLeft(element); // for onScroll only
+    this.lastScrollTop = Math.floor(this.ST.scrollTop(element)); // for onScroll only
+    this.lastScrollLeft = this.ST.scrollLeft(element); // for onScroll only
     this.event.bind(this.element, 'scroll', e => this.onScroll(e));
     updateGeometry(this);
   }
@@ -220,16 +219,15 @@ export default class PerfectScrollbar {
     }
 
     updateGeometry(this);
-    processScrollDiff(this, 'top', ScrollType.scrollTop(this.element) - this.lastScrollTop, this.settings.forceFireReachEvent);
+    processScrollDiff(this, 'top', this.ST.scrollTop(this.element) - this.lastScrollTop);
     processScrollDiff(
       this,
       'left',
-      ScrollType.scrollLeft(this.element) - this.lastScrollLeft,
-      this.settings.forceFireReachEvent
+      this.ST.scrollLeft(this.element) - this.lastScrollLeft
     );
 
-    this.lastScrollTop = Math.floor(ScrollType.scrollTop(this.element));
-    this.lastScrollLeft = ScrollType.scrollLeft(this.element);
+    this.lastScrollTop = Math.floor(this.ST.scrollTop(this.element));
+    this.lastScrollLeft = this.ST.scrollLeft(this.element);
   }
 
   destroy() {
