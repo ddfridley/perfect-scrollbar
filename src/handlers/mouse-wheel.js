@@ -139,7 +139,7 @@ export default function(i) {
       // deltaX will only be used for horizontal scrolling and deltaY will
       // only be used for vertical scrolling - this is the default
 
-      if(i.ST.scrollTop(element)===0 && deltaY<0 && (i.containerHeight >= i.contentHeight)){  // user wants to load more data
+      if(i.settings.postScroll && i.ST.scrollTop(element)===0 && deltaY<0 && (i.containerHeight >= i.contentHeight)){  // user wants to load more data
         if(!i.initialYReachEndSent) {
           i.element.style.maxHeight=i.containerHeight+'px';
           i.initialYReachEndSent=true;

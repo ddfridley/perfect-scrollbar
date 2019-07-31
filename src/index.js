@@ -26,7 +26,8 @@ const defaultSettings = () => ({
   useBothWheelAxes: false,
   wheelPropagation: true,
   wheelSpeed: 1,
-  useTopAndLeft: false
+  useTopAndLeft: false,
+  postScroll: false
 });
 
 const handlers = {
