@@ -275,7 +275,7 @@ function processScrollDiff$1(
     }
   }
 
-  if (i.reach[y] && (diff || forceFireReachEvent)) {
+  if (i.reach[y] && (diff || (!i.initialYReachEndSent && forceFireReachEvent))) {
     element.dispatchEvent(createEvent(("ps-" + y + "-reach-" + (i.reach[y]))));
   }
 }
@@ -882,9 +882,9 @@ var wheel = function(i) {
       // only be used for vertical scrolling - this is the default
 
       if(i.ST.scrollTop(element)===0 && deltaY<0 && (i.containerHeight >= i.contentHeight)){  // user wants to load more data
-        if(!i.initialYReachEndSend) {
+        if(!i.initialYReachEndSent) {
           i.element.style.maxHeight=i.containerHeight+'px';
-          i.initialYReachEndSend=true;
+          i.initialYReachEndSent=true;
           i.element.dispatchEvent(createEvent$1("ps-y-reach-end"));
           shouldPrevent=true; 
         }else {
