@@ -85,8 +85,12 @@
 
       var x = 0;
 
+      var postScroll={length:0, count: 200};
+
       function addEntries() {
+        if(postScroll.length >= postScroll.count) return;
         for (var i = 0; i < 10; i++) {
+          postScroll.length+=1;
           $('#content').innerHTML +=
             '<div class="entryPlaceholder">I love <a href="https://mdbootstrap.com?utm_campaign=PS&utm_source=Package">Material Design</a> #' +
             (x++) + '</div>';
@@ -94,7 +98,7 @@
       }
 
       addEntries();
-      var ps = new PerfectScrollbar('#container',{useTopAndLeft: true, postScroll: {length: 9, count: 1000000}});
+      var ps = new PerfectScrollbar('#container',{useTopAndLeft: true, postScroll});
 
       $('#container').addEventListener('ps-y-reach-end', function () {
         addEntries();

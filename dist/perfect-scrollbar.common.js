@@ -365,7 +365,7 @@ var updateGeometry = function(i) {
   }
 
   if (
-    !i.settings.suppressScrollY &&
+    !i.settings.suppressScrollY && !i.settings.postScroll &&
     i.containerHeight + i.settings.scrollYMarginOffset < i.contentHeight
   ) {
     i.scrollbarYActive = true;
@@ -379,6 +379,20 @@ var updateGeometry = function(i) {
       roundedScrollTop *
         (i.railYHeight - i.scrollbarYHeight) /
         (i.contentHeight - i.containerHeight)
+    );
+  } else if(i.settings.postScroll && i.settings.postScroll.count) {
+    var calculateContentHeight=i.contentHeight * (i.settings.postScroll.count / i.settings.postScroll.length);
+    i.scrollbarYActive = true;
+    i.railYHeight = i.containerHeight - i.railYMarginHeight;
+    i.railYRatio = i.containerHeight / i.railYHeight;
+    i.scrollbarYHeight = getThumbSize(
+      i,
+      toInt(i.railYHeight * i.containerHeight / calculateContentHeight)
+    );  
+    i.scrollbarYTop = toInt(
+      roundedScrollTop *
+        (i.railYHeight - i.scrollbarYHeight) /
+        (calculateContentHeight - i.containerHeight)
     );
   } else {
     i.scrollbarYActive = false;
