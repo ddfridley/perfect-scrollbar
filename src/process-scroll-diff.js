@@ -79,7 +79,7 @@ function processScrollDiff(
     }
   }
 
-  if (i.reach[y] && (diff || (!i.initialYReachEndSent && forceFireReachEvent))) {
+  if (i.reach[y] && (diff || (!i.settings.postScroll && !i.initialYReachEndSent && forceFireReachEvent))) {
     element.dispatchEvent(createEvent(`ps-${y}-reach-${i.reach[y]}`));
   }
 }
